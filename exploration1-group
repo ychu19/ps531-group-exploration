@@ -144,7 +144,7 @@ M-estimator).
 
 #In this sentence, the author asks whether summarizing differences between two groups using simple mean would be appropriate or misleading. I think the idea behind this question is closely related to the appropriateness of using t-test in comparing two groups.      
 T –test confirms whether means of two groups are significantly different from each other. Thus, t-test compares simple mean (not median) between two independently sampled groups and check whether the means of two groups are statistically different from each other. 
-T – test assumes two conditions. It assumes normal distribution and equal group variance (in other words, homogeneity between the two groups). (Fox, 2016). 
+T – test assumes two conditions. It assumes normal distribution and equal group variance (in other words, homogeneity between the two groups). (Fox, 2016, p. 194). 
 In the previous section, the author expresses her concern about the heterogeneity between the two sampled groups; the people who were interviewed post bombing can be more socially active and received more education than the people who were interviewed before bombing. Thus, based on this concern, comparing the two groups using simple mean can be problematic as the author suggests.  
 
 Second, and most importantly, after reading
@@ -159,7 +159,7 @@ comparison.\footnote{We also recommend @gerber2012field Chap 1 and 2 for more on
 
 #It is very important to make sure that we are comparing like with like when 
 trying to argue for an average treatment effect on our dependent variable. 
-To understand the effect of an explanatory variable on an dependent variable, 
+To understand the effect of an explanatory variable on a dependent variable, 
 a researcher can imagine an hypothetically counterfactual universe where everything 
 is the same with the real world but the explanatory variable, and compare the 
 differences of the dependent variable between the reality and the hypothetical 
@@ -216,8 +216,8 @@ legend(x="topright",pch=c(1,19),
 
 We next tried to control for both variables, but this next plot caused us to
 worry about the curse of dimensionality. 
-#In this paragraph, the author expresses her concern about the curse of dimensionality which is an obstacle a nonparametric regression. The curse of dimensionality refers to the phenomenon that the rapidly declining number of points near a focal point derives from the increasing number of explanatory variables (Fox, 2016). Non-parametric regression constitutes a regression line (which consists of local polynomial regression) using the average values of observations. Thus, in this case, the number of observations are closely related to the explanatory power of the variables; the bigger the number of observations, the explanatory power of the regression line generated from the explanatory variables is likely to be stronger. 
-In this context, dimension refers to the number of variables. If the number of variables increases while the number of observations is consistent, since the dimensions increase, the number of observations that can be used to explain phenomena around certain space reduces. Thus, increasing the dimensions near certain focal points might hinder accurate estimation of the effects of explanatory variables because estimation based on small number of variables are more prone to the biased estimate of the effects (Fox, 2016).    
+#In this paragraph, the author expresses her concern about the curse of dimensionality which is an obstacle a nonparametric regression. The curse of dimensionality refers to the phenomenon that the rapidly declining number of points near a focal point derives from the increasing number of explanatory variables (Fox, 2016, p.556). Non-parametric regression constitutes a regression line (which consists of local polynomial regression) using the average values of observations. Thus, in this case, the number of observations are closely related to the explanatory power of the variables; the bigger the number of observations, the explanatory power of the regression line generated from the explanatory variables is likely to be stronger. 
+In this context, dimension refers to the number of variables. If the number of variables increases while the number of observations is consistent, since the dimensions increase, the number of observations that can be used to explain phenomena around certain space reduces. Thus, increasing the dimensions near certain focal points might hinder accurate estimation of the effects of explanatory variables because estimation based on small number of variables are more prone to the biased estimate of the effects (Fox, 2016, p.556).    
 
 
 For example, you cannot claim to
