@@ -141,11 +141,11 @@ misleading --- we might not use the mean as a one-number summary in the first
 place, but might prefer something else that is less sensitive to extreme
 values (like a median-regression or some robust/resistant regression using an
 M-estimator). 
+
 #In this sentence, the author asks whether summarizing differences between two groups using simple mean would be appropriate or misleading. I think the idea behind this question is closely related to the appropriateness of using t-test in comparing two groups.      
 T –test confirms whether means of two groups are significantly different from each other. Thus, t-test compares simple mean (not median) between two independently sampled groups and check whether the means of two groups are statistically different from each other. 
 T – test assumes two conditions. It assumes normal distribution and equal group variance (in other words, homogeneity between the two groups). (Fox, 2016). 
 In the previous section, the author expresses her concern about the heterogeneity between the two sampled groups; the people who were interviewed post bombing can be more socially active and received more education than the people who were interviewed before bombing. Thus, based on this concern, comparing the two groups using simple mean can be problematic as the author suggests.  
-
 
 Second, and most importantly, after reading
 @rosenbaum2010design (especially chapters 1, 3, 7, 8, 9, 13) and
