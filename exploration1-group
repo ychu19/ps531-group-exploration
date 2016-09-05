@@ -157,6 +157,29 @@ comparison.\footnote{We also recommend @gerber2012field Chap 1 and 2 for more on
   counterfactual comparisons if the issue is not clear from Rosenbaum or
   Gelman and Hill.}
 
+#It is very important to make sure that we are comparing like with like when 
+trying to argue for an average treatment effect on our dependent variable. 
+To understand the effect of an explanatory variable on an dependent variable, 
+a researcher can imagine an hypothetically counterfactual universe where everything 
+is the same with the real world but the explanatory variable, and compare the 
+differences of the dependent variable between the reality and the hypothetical 
+counterfactual universe. An ideally perfect experiment should have everything 
+exactly the same between the control and treatment groups except the treatment, 
+so that researchers can observe the differences of outcomes from the two groups 
+and attribute the differences solely to the treatment. In real experiments, 
+since there may always be problems of unit homogeneity and omitted variable bias, 
+which may lead to treatment effect heterogeneity, researchers usually consider 
+randomized treatment assignment a tool to ensure that different treatment groups are `balanced', 
+so that the control and treatment groups are comparable.
+
+#However, in observational studies where treatments are observed rather than assigned, 
+like what our friend from UN wants to know about the effect of bombing on people’s 
+civic activities, it is not always reasonable to consider the observed data as random 
+samples from a common population (Gelman and Hill 2007, p. 181). There are several ways 
+to make sure that we are `comparing like with like’ in observational studies, and we will 
+talk more about what are the possible approaches to `balance’ the control (i.e. pre-bombing 
+in our case) and treatment (i.e. post-bombing) groups.
+
 These plots suggest do not make us worry too much about the common
 support/extrapolation problem with respect to two covariates (assuming that
 residential tenure and household income are truly covariates and not
