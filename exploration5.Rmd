@@ -1,0 +1,382 @@
+---
+title: 'Exploration 5: Randomization and Permutation Tests, Inverting Tests to Make Confidence Intervals, F-tests of Fit'
+author: 'Jake Bowers'
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+bibliography: classbib.bib
+graphics: yes
+output:
+  html_document:
+    graphics: yes
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+  pdf_document:
+    graphics: yes
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE, cache=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+# knitr settings to control how R chunks work.
+
+## To make the html file do
+## render("exploration4.Rmd",output_format=html_document(fig_retina=FALSE))
+## To make the pdf file do
+## render("exploration4.Rmd",output_format=pdf_document())
+
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small",    # slightly smaller font for code
+  echo=TRUE,
+  results='markup',
+  strip.white=TRUE,
+  fig.path='figs/fig',
+  cache=FALSE,
+  highlight=TRUE,
+  width.cutoff=132,
+  size='footnotesize',
+  out.width='.9\\textwidth',
+  message=FALSE,
+  comment=NA)
+```
+
+
+```{r initialize,echo=FALSE}
+##First, just setup the R environment for today:
+if(!file.exists('figs')) dir.create('figs')
+
+options(SweaveHooks=list(fig=function(){
+			   par(mar=c(3.5, 3, 1.1, 0),
+			       pty="s",
+			       mgp=c(1.5,0.5,0),
+			       oma=c(0,0,0,0))},
+			 echo=function(){options(continue=" ") ##Don't show "+" prompts,
+			 options(prompt=" ")
+			 }),
+	digits=4,
+	scipen=8,
+	width=132
+	)
+options(error=function(){options(prompt="> ",continue="+ ");NULL})
+```
+
+The campaign consultant calls back. First, he is worried about the following
+analysis of a field experiment that randomly assigned newspaper advertisements
+within pairs of similar cities. "Before my analyst quit, she said that this
+next result was bad and that I should (1) do a 'randomization-based test
+rather than the CLT+IID based test' and (2) assess the error rate of that
+test. What should I do? What is this bad? Can you please do this for me? (By
+the way, what is the weird bit of code with the `sqrt` call at the bottom?
+What is the point of that?)"
+
+
+```{r}
+news.df<-read.csv("http://jakebowers.org/Data/news.df.csv")
+news.df$sF<-factor(news.df$s)
+```
+
+
+```{r errorrate, cache=TRUE}
+
+pair.assignment<-function(pair,z){
+  ## A function to randomly assign treatment within pair
+  unsplit(lapply(split(z,pair),sample),pair)
+}
+
+simErrorPairedLmCLTIID<-function(y,z,pair){
+  ## y is an outcome
+  ## z is a treatment assignment
+  ## pair is a factor variable denoting experimental block or set
+  newz<-pair.assignment(pair,z)## make truth H0: \tau=0
+
+  mytest<-function(newz){
+    ## mytest is a function of outcome, treatment assignment, and design
+    ## features (like the experimental blocking) that returns a p-value
+    ## newz is a treatment assignment
+    summary(lm(y~newz+pair))$coef["newz","Pr(>|t|)"]
+    ## Sketch of randomization based test.
+    ##randdist<-replicate(100 ......[newz, calc mean diff]
+    ##p<-mean(randdist>=obsstat)
+    ##return(p)
+  }
+
+  mytest(newz)
+}
+
+nsims<-1000
+pForTruth<-replicate(nsims,simErrorPairedLmCLTIID(y=news.df$r,z=news.df$z,pair=news.df$sF))
+mean(pForTruth<=.05)
+## plot(ecdf(pForTruth))
+## abline(0,1)
+sqrt((.135*(1-.135))/nsims)
+```
+
+Next the friend calls back: "Thanks much for your help in understanding and
+overcoming the problems with the test based on `lm`. However, when I reported
+on this to a friend, this person said, 'Pah! $p$-values are bad. You can
+always lie with statistics unless you use a confidence interval!' Now I need
+to create a confidence interval. I paid someone to help me out but this person
+also quit. I'm forwarding what they did so far."
+
+"First, I'm wondering how a bunch of $p$-values testing different hypotheses
+can tell me anything about a confidence interval. What would the confidence
+interval be here?"
+
+```{r ps,results="asis"}
+## Make a confidence interval by inverting a hypothesis test.
+possibleH0<-seq(-10,12,1)
+
+mytestCLTIID<-function(h,y,z,s){
+  newy<-y-(z*h)
+  summary(lm(newy~z+s))$coef["z","Pr(>|t|)"]
+}
+
+pForPossibleH0<-sapply(possibleH0,function(h,y=news.df$r,z=news.df$z,s=news.df$sF){
+					 mytestCLTIID(h=h,y=y,z=z,s=s)
+})
+names(pForPossibleH0)<-possibleH0
+pForPossibleH0
+##library(xtable)
+##themat<-matrix(pForPossibleH0,nrow=1,dimnames=list(NULL,possibleH0))
+##print(xtable(themat),type="html",comment=FALSE)
+##kable(matrix(pForPossibleH0,nrow=1,dimnames=list(NULL,possibleH0)))
+```
+
+"I also do not understand what is going on here."
+
+```{r fastertestinversion, results='hide'}
+## Can I find this by changing possibleH0?
+## confint(lm(r~z+sF,data=news.df),parm="z")
+
+## Or this?
+mytest2ForUniRoot<-function(x,y=news.df$r,z=news.df$z,s=news.df$sF){
+			 newy<-y-(z*x)
+			 .05-summary(lm(newy~z+s))$coef["z","Pr(>|t|)"]
+}
+
+## mytest2ForUniRoot(20)
+## mytest2ForUniRoot(-20)
+upperlim<-uniroot(mytest2ForUniRoot,interval=c(0,20),extendInt="no")
+lowerlim<-uniroot(mytest2ForUniRoot,interval=c(-20,0),extendInt="no")
+c(lowerlim$root,upperlim$root)
+
+## OR
+mytest2ForOptim<-function(x,y=news.df$r,z=news.df$z,s=news.df$sF){
+			 newy<-y-(z*x)
+			 abs(.05-summary(lm(newy~z+s))$coef["z","Pr(>|t|)"])
+}
+
+
+optlower<-optim(par=c(-1),fn=mytest2ForOptim,method="L-BFGS-B",
+		lower=-20,upper=0)
+
+optupper<-optim(par=c(19),fn=mytest2ForOptim,method="L-BFGS-B",
+		lower=0,upper=20)
+
+c(optlower$par,optupper$par)
+```
+
+
+"But", your friend continues,"this confidence interval cannot  have 'correct
+coverage', right? What would be a better confidence interval for a randomized
+experiment like this one? How would we know that it is better? Can you show me
+a better confidence interval plus evidence that it will not mislead me? Also,
+I'm a bit worried about what this new 'randomization based' confidence
+interval requires. The confidence intervals in @dunning2012natural or
+@gerber2012field seem much simpler. Are they also 'randomization based'? If
+so, how? Are they better? Can you show me?"
+
+```{r cicoverage, cache=TRUE}
+newExperiment<-function(z,s=news.df$sF){
+  newz<-pair.assignment(s,z) ## make truth H0: \tau=0
+  return(newz)
+}
+
+myTestStat<-function(x,newz,y=news.df$r,s=news.df$sF){
+  # x is a hypothesized constant treatment effect
+  newy <- y - ( newz*x ) ## what we would observe under the hypothesis (constant effects)
+  ## Something like this:
+  ## mean(sapply(split(news.df,news.df$sF),function(dat){ dat$r[dat$z==1]-dat$r[dat$z==0] }))
+  coef(lm(newy~newz+s))[["newz"]]
+}
+
+myTestStat(x=0,newz=newExperiment(z=news.df$z))
+
+randDistH0<-replicate(1000,myTestStat(x=0,newz=newExperiment(z=news.df$z)))
+
+obsTestStat<-myTestStat(x=0,newz=news.df$z)
+
+mean(randDistH0>=obsTestStat)
+mean(randDistH0<=obsTestStat)
+
+2*min(c(mean(randDistH0>=obsTestStat),
+	mean(randDistH0<=obsTestStat)))
+
+## for now, H0: y1=y0, or x=0
+```
+
+```{r, cache=TRUE}
+## To assess the Type I error rate, we need alpha.
+
+myFisherTest<-function(thez){
+  ## return a p-value
+  randDistH0<-replicate(1000,myTestStat(x=0,newz=newExperiment(z=thez)))
+  pTwoSided <- 2*min(c(mean(randDistH0>=obsTestStat),
+		      mean(randDistH0<=obsTestStat)))
+  return(pTwoSided)
+}
+
+
+simErrorRateFisherTest<-function(z,pair,msg=TRUE){
+	## y is an outcome
+	## z is a treatment assignment
+	## pair is a factor variable denoting experimental block or set
+	## msg TRUE means print a dot to show speed of operation
+	if(msg){ message(".") }
+	newz<-pair.assignment(pair,z)## make truth H0: \tau=0
+
+	myFisherTest(thez=newz)
+}
+
+simErrorRateFisherTest(z=news.df$z,pair=news.df$sF)
+nsims<-100
+library(foreach) ## showing a different way to do parallel processing
+library(doParallel)
+registerDoParallel(cores=detectCores())
+set.seed(20160927)
+
+## psH0True<-replicate(nsims,simErrorRateFisherTest(z=news.df$z,pair=news.df$sF))
+psH0True<-times(nsims) %dopar% simErrorRateFisherTest(z=news.df$z,pair=news.df$sF)
+mean(psH0True<=.05)
+
+sqrt((.5*(1-.5))/nsims)
+
+## Confidence interval: choose alpha=.05
+
+myFisherTest2<-function(x,thez){
+  ## return a p-value
+  randDistH0<-replicate(1000,myTestStat(x=x,newz=newExperiment(z=thez)))
+  pTwoSided <- 2*min(c(mean(randDistH0>=obsTestStat),
+		      mean(randDistH0<=obsTestStat)))
+  return(pTwoSided)
+}
+
+myFisherTest2(x=2,thez=news.df$z)
+## sapply(seq(-10,5,1),function(h){ message("."); myFisherTest2(x=h,thez=news.df$z) })
+res1<-foreach(h=seq(-10,5,1),.combine='c') %dopar% {message("."); myFisherTest2(x=h,thez=news.df$z) }
+rbind(seq(-10,5,1),res1)
+
+myFisherTest2Uniroot<-function(x,thez){
+  ## return a p-value
+  randDistH0<-replicate(1000,myTestStat(x=x,newz=newExperiment(z=thez)))
+  pTwoSided <- 2*min(c(mean(randDistH0>=obsTestStat),
+		      mean(randDistH0<=obsTestStat)))
+  return(.05-pTwoSided)
+}
+
+upperlimF<-uniroot(myFisherTest2Uniroot,thez=news.df$z,interval=c(0,20),extendInt="no")
+upperlimF
+
+```
+
+"Hey, y'all, sorry to interrupt, but I have an urgent question regarding the
+civilian deaths data." You suddenly hear the voice of your UN friend on the
+line.
+
+"How did you manage to break into a telephone conversation?", you ask.
+
+"I can't tell you.", she replies,"But I need help. Someone is telling me that I should include a fixed effect for regime type when I am predicting civilian casualties depending on treaty signing. Here is what one analyst did. Can you interpret the coefficients of this model?"
+
+```{r}
+load(url("http://jakebowers.org/Data/wartreatydeath.rda"))
+library(car)
+#wartreatydeath$polityCat<-cut(wartreatydeath$polity,4)
+wartreatydeath$polityCat<-recode(round(wartreatydeath$polity),
+				 "-10:-6='Autocracy'; -5:5='Anocracy';5:10='Democracy'",
+				 as.factor.result=TRUE, levels=c("Autocracy","Anocracy","Democracy"))
+###with(wartreatydeath,table(polityCat,polity,useNA="ifany"))
+lmPolity<-lm(noncomdead~treaty*polityCat,data=wartreatydeath)
+```
+
+```{r}
+newdat<-expand.grid(treaty=c(0,1),polityCat=levels(wartreatydeath$polityCat))
+newdat$yhat<-predict(lmPolity,newdata=newdat)
+```
+
+"Now, I am supposed to do a test for whether adding `polityCat` improved the
+fit of the model. I've heard of the F-test and so I asked two analysts in
+different camps, I mean, offices, to do F-tests. But they each did something
+very different. Are they both wrong? Or one right? Or both right in some way?
+What is going on? I suspect that they each forgot to do something because I
+don't see any $p$-values from either of their reports. In fact, I don't really
+understand the point of an F-test.  Why not just look at the p-values on the
+coefficients in the model itself?"
+
+*Analyst 1 report:*
+```{r analyst1, results='hide'}
+lmSmall<-lm(noncomdead~treaty,data=wartreatydeath)
+theanova<-anova(lmSmall,lmPolity)
+```
+
+*Analyst 2 report:*
+```{r analyst2, results='hide'}
+
+lmSmallRSS<-sum(resid(lmSmall)^2)
+lmPolityRSS<-sum(resid(lmPolity)^2)
+q<-length(coef(lmPolity))-length(coef(lmSmall))
+nk1<-lmPolity$df.residual
+obsF<-((lmSmallRSS-lmPolityRSS)/q)/(lmPolityRSS/nk1)
+cbind(c(lmSmall$df.residual,nk1),c(lmSmallRSS,lmPolityRSS),c(NA,q),c(NA,obsF))
+
+Ffun<-function(){
+  shuffled.y<-sample(wartreatydeath$noncomdead) ## represent the null of no relationship between y and x
+  newlmSmall<-lm(shuffled.y ~ treaty,data=wartreatydeath)
+  newlmPolity<-lm(shuffled.y ~ treaty*polityCat,data=wartreatydeath)
+  newlmSmallRSS<-sum(resid(newlmSmall)^2)
+  newlmPolityRSS<-sum(resid(newlmPolity)^2)
+  q<-length(coef(newlmPolity))-length(coef(newlmSmall))
+  nk1<-newlmPolity$df.residual
+  theF<-((newlmSmallRSS-newlmPolityRSS)/q)/(newlmPolityRSS/nk1)
+  return(theF)
+}
+
+set.seed(123456)
+
+myFtest<-function(nsims){
+  fdist<-replicate(nsims,Ffun())
+  mean(fdist>=obsF)
+}
+
+## Assuming that the F-statistic's sampling distribution an F-distribution:
+pf(obsF,q,nk1,lower.tail=FALSE)
+
+## Assuming only that it is meaningful to represent the null hypothesis of no
+## effect by  permuting/shuffling the outcome such that each
+## set of covariates (treaty and polityCat) has independent and equal chance to be associated with each outcome value.
+
+## Compare the two distributions of the test statistic --- one based on
+## permutations, the other based on asymptotic theory.
+
+fdist<-replicate(nsims,Ffun())
+
+plot(density(fdist),ylim=c(0,.9))
+curve(df(x,q,nk1),from=0,to=5,add=TRUE,col="red")
+
+set.seed(20110307)
+randomF<-rf(length(fdist),q,nk1)
+qqplot(fdist,randomF,xlim=range(c(fdist,randomF)),ylim=range(c(fdist,randomF)))
+abline(0,1)
+```
+
+
+
+## References
+
+
